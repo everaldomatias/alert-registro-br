@@ -1,0 +1,9 @@
+.vscode
+vscode
+sftp.json
+.sftp.json
+node_modules/*
+*.log
+*.zip
+.sass-cache
+.cache
