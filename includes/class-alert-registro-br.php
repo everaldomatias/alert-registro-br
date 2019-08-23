@@ -77,28 +77,31 @@ class Alert_Registro_Br {
                 'labels'    => array(
                     'name'          => __( 'Domains Alerts', 'alert-registro-br' ),
                     'singular_name' => __( 'Alert', 'alert-registro-br' ),
-                    'add_new' => __( 'Add new domain to alert', 'alert-registro-br' ),
-                    'add_new_item' => __( 'Add new domain to alert', 'alert-registro-br' ),
-                    'edit_item' => __( 'Domain to alert', 'alert-registro-br' )
+                    'add_new'       => __( 'Add new domain to alert', 'alert-registro-br' ),
+                    'add_new_item'  => __( 'Add new domain to alert', 'alert-registro-br' ),
+                    'edit_item'     => __( 'Domain to alert', 'alert-registro-br' )
                 ),
                 'public'      => true,
                 'has_archive' => false,
-                'exclude_from_search' => true,
-                'publicly_queryable' => false,
-                'show_ui' => true,
-                'show_in_menu' => 'options-general.php',
-                'show_in_nav_menus' => false,
-                'show_in_admin_bar' => false,
-                'show_in_rest' => true,
-                'rest_base' => 'alerts',
-                'menu_icon' => 'dashicons-warning',
-                'supports' => array( 'title' ),
-                'rewrite' => false,
-                'query_var' => false
+                'exclude_from_search'   => true,
+                'publicly_queryable'    => false,
+                'show_ui'               => true,
+                'show_in_menu'          => 'options-general.php',
+                'show_in_nav_menus'     => false,
+                'show_in_admin_bar'     => false,
+                'show_in_rest'          => true,
+                'rest_base'             => 'alerts',
+                'menu_icon'             => 'dashicons-warning',
+                'supports'              => array( 'title' ),
+                'rewrite'               => false,
+                'query_var'             => false
             )
         );
     }
 
+    /**
+     * Register the custom metabox
+     */
     public function arb_add_custom_meta_boxes() {
 
         add_meta_box(
@@ -139,7 +142,9 @@ class Alert_Registro_Br {
 
     }
 
-    /* Save the meta box's post metadata. */
+    /**
+     * Save the values from custom metabox
+     */
     public function arb_save_custom_meta_box( $post_id, $post ) {
 
         /* Verify the nonce before proceeding. */
@@ -154,7 +159,6 @@ class Alert_Registro_Br {
             return $post_id;
 
         // Domain
-
         $new_meta_value_domain = ( isset( $_POST['arb-domain-to-alert'] ) ? sanitize_text_field( $_POST['arb-domain-to-alert'] ) : '' );
 
         $meta_key_domain = 'arb_domain_to_alert';
@@ -171,7 +175,6 @@ class Alert_Registro_Br {
             delete_post_meta( $post_id, $meta_key_domain, $meta_value_domain );
 
         // Email
-
         $new_meta_value_mail = ( isset( $_POST['arb-mail-to-alert'] ) ? sanitize_email( $_POST['arb-mail-to-alert'] ) : '' );
 
         $meta_key_mail = 'arb_mail_to_alert';
@@ -188,6 +191,9 @@ class Alert_Registro_Br {
             delete_post_meta( $post_id, $meta_key_mail, $meta_value_mail );
     }
 
+    /**
+     * Change the title for domain alerts
+     */
     public function arb_change_title_text( $title ) {
         $screen = get_current_screen();
 
@@ -198,6 +204,9 @@ class Alert_Registro_Br {
         return $title;
     }
 
+    /**
+     * Custom the columns for domain alerts
+     */
     public function arb_set_custom_edit_columns( $columns ) {
 
         unset( $columns['title'] );
@@ -235,7 +244,7 @@ class Alert_Registro_Br {
     }
 
     /**
-     * Add link to Settings on plugin action links
+     * Add link to settings page on plugin action links
      */
     public function arb_add_plugin_action_links( $links ) {
 
