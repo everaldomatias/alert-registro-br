@@ -3,7 +3,7 @@
  * Alert_Registro_Br
  *
  * @package Alert_Registro_Br/Classes
- * @version	0.0.1
+ * @version	0.0.2
  * @since 0.0.1
  */
 
@@ -103,7 +103,7 @@ class Alert_Registro_Br {
 
         add_meta_box(
             'arb_mail_to_alert',
-            esc_html__( 'Mail to alert', 'alert-registro-br' ),
+            esc_html__( 'Settings to alert', 'alert-registro-br' ),
             array( $this, 'arb_custom_html_meta_box' ),
             'domains-alerts',
             'normal',
@@ -114,6 +114,12 @@ class Alert_Registro_Br {
     public function arb_custom_html_meta_box( $post ) { ?>
 
         <?php wp_nonce_field( basename( __FILE__ ), 'arb_meta_box_nonce' ); ?>
+
+        <p>
+            <label for="arb-domain-to-alert"><?php _e( "Adicione o domínio para acompanhar a expiração do domínio.", 'alert-registro-br' ); ?></label>
+            <br>
+            <input class="arb-domain-to-alert" type="text" name="arb-domain-to-alert" id="arb-domain-to-alert" placeholder="<?php _e( 'Domain', 'alert-registro-br' ); ?>"value="<?php echo esc_attr( get_post_meta( $post->ID, 'arb_domain_to_alert', true ) ); ?>" required>
+        </p>
 
         <p>
             <label for="arb-mail-to-alert"><?php _e( "Adicione o email para receber o alerta da expiração do domínio.", 'alert-registro-br' ); ?></label>
@@ -147,26 +153,39 @@ class Alert_Registro_Br {
         if ( ! current_user_can( $post_type->cap->edit_post, $post_id ) )
             return $post_id;
 
-        /* Get the posted data and sanitize it for use as an HTML class. */
-        $new_meta_value = ( isset( $_POST['arb-mail-to-alert'] ) ? sanitize_email( $_POST['arb-mail-to-alert'] ) : '' );
+        // Domain
 
-        /* Get the meta key. */
-        $meta_key = 'arb_mail_to_alert';
+        $new_meta_value_domain = ( isset( $_POST['arb-domain-to-alert'] ) ? sanitize_text_field( $_POST['arb-domain-to-alert'] ) : '' );
 
-        /* Get the meta value of the custom field key. */
-        $meta_value = get_post_meta( $post_id, $meta_key, true );
+        $meta_key_domain = 'arb_domain_to_alert';
 
-        /* If a new meta value was added and there was no previous value, add it. */
-        if ( $new_meta_value && '' == $meta_value )
-            add_post_meta( $post_id, $meta_key, $new_meta_value, true );
+        $meta_value_domain = get_post_meta( $post_id, $meta_key_domain, true );
 
-        /* If the new meta value does not match the old value, update it. */
-        elseif ( $new_meta_value && $new_meta_value != $meta_value )
-            update_post_meta( $post_id, $meta_key, $new_meta_value );
+        if ( $new_meta_value_domain && '' == $meta_value_domain )
+            add_post_meta( $post_id, $meta_key_domain, $new_meta_value_domain, true );
 
-        /* If there is no new meta value but an old value exists, delete it. */
-        elseif ( '' == $new_meta_value && $meta_value )
-            delete_post_meta( $post_id, $meta_key, $meta_value );
+        elseif ( $new_meta_value_domain && $new_meta_value_domain != $meta_value_domain )
+            update_post_meta( $post_id, $meta_key_domain, $new_meta_value_domain );
+
+        elseif ( '' == $new_meta_value_domain && $meta_value_domain )
+            delete_post_meta( $post_id, $meta_key_domain, $meta_value_domain );
+
+        // Email
+
+        $new_meta_value_mail = ( isset( $_POST['arb-mail-to-alert'] ) ? sanitize_email( $_POST['arb-mail-to-alert'] ) : '' );
+
+        $meta_key_mail = 'arb_mail_to_alert';
+
+        $meta_value_mail = get_post_meta( $post_id, $meta_key_mail, true );
+
+        if ( $new_meta_value_mail && '' == $meta_value_mail )
+            add_post_meta( $post_id, $meta_key_mail, $new_meta_value_mail, true );
+
+        elseif ( $new_meta_value_mail && $new_meta_value_mail != $meta_value_mail )
+            update_post_meta( $post_id, $meta_key_mail, $new_meta_value_mail );
+
+        elseif ( '' == $new_meta_value_mail && $meta_value_mail )
+            delete_post_meta( $post_id, $meta_key_mail, $meta_value_mail );
     }
 
     public function arb_change_title_text( $title ) {
@@ -185,15 +204,24 @@ class Alert_Registro_Br {
         unset( $columns['date'] );
         
         return array_merge ( $columns, array ( 
-            'title'             =>  __( 'Domain', 'alert-registro-br' ),
-            'arb-mail-to-alert' => __( 'Email', 'alert-registro-br' ),
-            'date'              => __( 'Date', 'alert-registro-br' )
+            'title'                 => __( 'Name', 'alert-registro-br' ),
+            'arb-domain-to-alert'   => __( 'Domain', 'alert-registro-br' ),
+            'arb-mail-to-alert'     => __( 'Email', 'alert-registro-br' ),
+            'date'                  => __( 'Date', 'alert-registro-br' )
         ) );
 
     }
 
     public function arb_custom_domains_alerts_column( $column, $post_id ) {
         switch ( $column ) {
+
+            case 'arb-domain-to-alert' :
+                $domain = get_post_meta( $post_id , 'arb_domain_to_alert', true );
+                if ( is_string( $domain ) )
+                    echo $domain;
+                else
+                    echo '--';
+                break;
 
             case 'arb-mail-to-alert' :
                 $mail = get_post_meta( $post_id , 'arb_mail_to_alert', true );

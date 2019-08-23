@@ -4,7 +4,7 @@
  * Plugin Name:       Alert Registro.br
  * Plugin URI:        https://github.com/everaldomatias/alert-registro-br
  * Description:       Create custom alerts from the expiration date of domains registered in the registry.
- * Version:           0.0.1
+ * Version:           0.0.2
  * Author:            Everaldo Matias
  * Author URI:        https://everaldo.dev
  * License:           GPLv2 or later
