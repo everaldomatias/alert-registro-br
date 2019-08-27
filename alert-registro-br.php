@@ -33,6 +33,15 @@ if ( ! class_exists( 'Alert_Registro_Br' ) ) {
 }
 
 /**
+ * Add class to manage wp crons
+ */
+if ( ! class_exists( 'Alert_Registro_Br_Cron' ) ) {
+
+	include_once dirname( ARB_FILE ) . '/includes/class-cron.php';
+
+}
+
+/**
  * Load the plugin text domain for translation.
  */
 function arb_load_plugin_textdomain() {
