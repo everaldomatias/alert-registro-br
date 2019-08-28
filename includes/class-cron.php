@@ -52,33 +52,40 @@ class Alert_Registro_Br_Cron {
         wp_clear_scheduled_hook( 'arb_cron_hook' );
 
     }
+    
+    public function arb_get_curl( $url ) {
+        $curl = curl_init();
+        curl_setopt( $curl, CURLOPT_RETURNTRANSFER, True );
+        curl_setopt( $curl, CURLOPT_URL, $url );
+        curl_setopt( $curl,CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:7.0.1) Gecko/20100101 Firefox/7.0.1' );
+        $return = curl_exec( $curl );
+        curl_close( $curl );
+        return $return;
+    }
 
     public function arb_cron_exec() {
-
         $post_id = -1;
-
-        $title = 'My Example Post -> ' . date("Y-m-d H:i:s");;
-
+        $title = 'My Example Post -> ' . date("Y-m-d H:i:s");
+        $curlsss = wp_remote_get( "https://rdap.registro.br/domain/agpagencia.com.br" );
+        
         // If the page doesn't already exist, then create it
         if( null == get_page_by_title( $title ) ) {
-
             $post_id = wp_insert_post(
                 array(
                     'comment_status'	=>	'closed',
                     'ping_status'		=>	'closed',
                     'post_title'		=>	$title,
                     'post_status'		=>	'publish',
+                    'post_content'      =>  $curlsss,
                     'post_type'		    =>	'post'
                 )
             );
-
         } else {
-
             $post_id = -2;
+        }
 
-        }        
-        
     }
+
 
     public function arb_add_cron_interval( $schedules ) {
         $schedules['one_minute'] = array(
@@ -88,7 +95,6 @@ class Alert_Registro_Br_Cron {
 
         return $schedules;
     }
-
-
+    
 }
 new Alert_Registro_Br_Cron();
