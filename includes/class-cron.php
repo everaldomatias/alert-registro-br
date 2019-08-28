@@ -28,20 +28,28 @@ class Alert_Registro_Br_Cron {
 
         do_action( 'arb_cron_hook' );
 
+        /**
+         * Create new cron interval (temporarily for development)
+         */
         add_filter( 'cron_schedules', array( $this, 'arb_add_cron_interval' ) );
         
-        //register_activation_hook( __FILE__, array( $this, 'arb_activation' ) );
-        //add_action( 'init', array( $this, 'arb_activation' ) );
-        //add_action( 'arb_cron_hook', array( $this, 'arb_cron_exec' ) );
+        add_action( 'arb_cron_hook', array( $this, 'arb_cron_exec' ) );
+
     }
 
-    public function arb_activation() {
+    static function arb_activation() {
         
         $timestamp = wp_next_scheduled( 'arb_cron_hook' );
 
         if( $timestamp == false ){
             wp_schedule_event( time(), 'one_minute', 'arb_cron_hook' );
         }
+
+    }
+
+    static function arb_deactivation() {
+
+        wp_clear_scheduled_hook( 'arb_cron_hook' );
 
     }
 

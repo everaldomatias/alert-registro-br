@@ -47,3 +47,9 @@ if ( ! class_exists( 'Alert_Registro_Br_Cron' ) ) {
 function arb_load_plugin_textdomain() {
 	load_plugin_textdomain( 'alert-registro-br', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 }
+
+/**
+ * Hooks for activation and deactivation plugin
+ */
+register_activation_hook( __FILE__, array( 'Alert_Registro_Br_Cron', 'arb_activation' ) );
+register_deactivation_hook( __FILE__, array( 'Alert_Registro_Br_Cron', 'arb_deactivation' ) );
