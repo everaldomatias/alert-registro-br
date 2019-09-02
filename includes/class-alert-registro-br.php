@@ -47,6 +47,8 @@ class Alert_Registro_Br {
         add_filter( 'manage_domains-alerts_posts_columns', array( $this, 'arb_set_custom_edit_columns' ) );
         add_action( 'manage_domains-alerts_posts_custom_column' , array( $this, 'arb_custom_domains_alerts_column' ), 10, 2 );
         add_action( 'plugin_action_links_' . plugin_basename( ARB_FILE ), array( $this, 'arb_add_plugin_action_links' ), 10, 5 );
+        
+        add_action( 'save_post', array( $this, 'arb_get_domain_expiration' ), 99, 3 );
 
     }
     
@@ -105,7 +107,7 @@ class Alert_Registro_Br {
     public function arb_add_custom_meta_boxes() {
 
         add_meta_box(
-            'arb_mail_to_alert',
+            'arb_mail_to_alert_mb',
             esc_html__( 'Settings to alert', 'alert-registro-br' ),
             array( $this, 'arb_custom_html_meta_box' ),
             'domains-alerts',
@@ -121,13 +123,19 @@ class Alert_Registro_Br {
         <p>
             <label for="arb-domain-to-alert"><?php _e( "Adicione o domínio para acompanhar a expiração do domínio.", 'alert-registro-br' ); ?></label>
             <br>
-            <input class="arb-domain-to-alert" type="text" name="arb-domain-to-alert" id="arb-domain-to-alert" placeholder="<?php _e( 'Domain', 'alert-registro-br' ); ?>"value="<?php echo esc_attr( get_post_meta( $post->ID, 'arb_domain_to_alert', true ) ); ?>" required>
+            <input class="arb-domain-to-alert" type="text" name="arb-domain-to-alert" id="arb-domain-to-alert" placeholder="<?php _e( 'Domain', 'alert-registro-br' ); ?>" value="<?php echo esc_attr( get_post_meta( $post->ID, 'arb_domain_to_alert', true ) ); ?>" required>
         </p>
 
         <p>
             <label for="arb-mail-to-alert"><?php _e( "Adicione o email para receber o alerta da expiração do domínio.", 'alert-registro-br' ); ?></label>
             <br>
-            <input class="arb-mail-to-alert" type="email" name="arb-mail-to-alert" id="arb-mail-to-alert" placeholder="<?php _e( 'Email', 'alert-registro-br' ); ?>"value="<?php echo esc_attr( get_post_meta( $post->ID, 'arb_mail_to_alert', true ) ); ?>" required>
+            <input class="arb-mail-to-alert" type="email" name="arb-mail-to-alert" id="arb-mail-to-alert" placeholder="<?php _e( 'Email', 'alert-registro-br' ); ?>" value="<?php echo esc_attr( get_post_meta( $post->ID, 'arb_mail_to_alert', true ) ); ?>" required>
+        </p>
+        
+        <p>
+            <label for="arb-domain-expiration"><?php _e( "Esse campo será preenchido automaticamente.", 'alert-registro-br' ); ?></label>
+            <br>
+            <input class="arb-domain-expiration" type="text" name="arb-domain-expiration" id="arb-domain-expiration" placeholder="<?php _e( 'Expiration date', 'alert-registro-br' ); ?>" value="<?php echo esc_attr( get_post_meta( $post->ID, 'arb_domain_expiration', true ) ); ?>" disabled>
         </p>
 
     <?php }
@@ -189,6 +197,55 @@ class Alert_Registro_Br {
 
         elseif ( '' == $new_meta_value_mail && $meta_value_mail )
             delete_post_meta( $post_id, $meta_key_mail, $meta_value_mail );
+            
+        // Expiration date
+        $new_meta_value_expiration = ( isset( $_POST['arb-domain-expiration'] ) ? sanitize_email( $_POST['arb-domain-expiration'] ) : '' );
+
+        $meta_key_expiration = 'arb_domain_expiration';
+
+        $meta_value_expiration = get_post_meta( $post_id, $meta_key_expiration, true );
+
+        if ( $new_meta_value_expiration && '' == $meta_value_expiration )
+            add_post_meta( $post_id, $meta_key_mail, $new_meta_value_expiration, true );
+
+        elseif ( $new_meta_value_expiration && $new_meta_value_expiration != $meta_value_expiration )
+            update_post_meta( $post_id, $meta_key_expiration, $new_meta_value_expiration );
+
+        elseif ( '' == $new_meta_value_expiration && $meta_value_expiration )
+            delete_post_meta( $post_id, $meta_key_expiration, $meta_value_expiration );
+        
+    }
+    
+    public function arb_get_curl( $url ) {
+        $curl = curl_init();
+        curl_setopt( $curl, CURLOPT_RETURNTRANSFER, True );
+        curl_setopt( $curl, CURLOPT_URL, $url );
+        curl_setopt( $curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:7.0.1) Gecko/20100101 Firefox/7.0.1' );
+        $return = curl_exec( $curl );
+        curl_close( $curl );
+        return $return;
+    }
+    
+    /**
+     *
+     */
+    public function arb_get_domain_expiration( $post_id, $post, $update ) {
+    
+        $post_type = get_post_type( $post_id );
+    
+        if ( 'domains-alerts' != $post_type ) return;
+        
+        $arb_domain_to_alert = get_post_meta( $post_id, 'arb_domain_to_alert', true );
+        
+        $infos = $this->arb_get_curl( 'https://rdap.registro.br/domain/' . $arb_domain_to_alert );
+        $infos_json = json_decode( $infos );
+        
+        if ( $infos ) {
+            $date = new DateTime( $infos_json->{'events'}[2]->eventDate, new DateTimeZone( 'America/Sao_Paulo' ));
+            $date_expiration = $date->format('d/m/Y');
+            update_post_meta( $post_id, 'arb_domain_expiration', $date_expiration );
+        }
+    
     }
 
     /**
@@ -216,7 +273,8 @@ class Alert_Registro_Br {
             'title'                 => __( 'Name', 'alert-registro-br' ),
             'arb-domain-to-alert'   => __( 'Domain', 'alert-registro-br' ),
             'arb-mail-to-alert'     => __( 'Email', 'alert-registro-br' ),
-            'date'                  => __( 'Date', 'alert-registro-br' )
+            'arb-domain-expiration' => __( 'Expiration', 'alert-registro-br' ),
+            'date'                  => __( 'Create on', 'alert-registro-br' )
         ) );
 
     }
@@ -236,6 +294,14 @@ class Alert_Registro_Br {
                 $mail = get_post_meta( $post_id , 'arb_mail_to_alert', true );
                 if ( is_string( $mail ) )
                     echo $mail;
+                else
+                    echo '--';
+                break;
+                
+            case 'arb-domain-expiration' :
+                $expiration = get_post_meta( $post_id , 'arb_domain_expiration', true );
+                if ( is_string( $expiration ) && ! empty( $expiration ) )
+                    echo $expiration;
                 else
                     echo '--';
                 break;

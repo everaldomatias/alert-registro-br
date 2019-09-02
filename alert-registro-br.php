@@ -37,7 +37,7 @@ if ( ! class_exists( 'Alert_Registro_Br' ) ) {
  */
 if ( ! class_exists( 'Alert_Registro_Br_Cron' ) ) {
 
-	include_once dirname( ARB_FILE ) . '/includes/class-cron.php';
+	//include_once dirname( ARB_FILE ) . '/includes/class-cron.php';
 
 }
 
