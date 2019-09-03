@@ -227,7 +227,7 @@ class Alert_Registro_Br {
     }
     
     /**
-     *
+     * Get and save date expiration
      */
     public function arb_get_domain_expiration( $post_id, $post, $update ) {
     
@@ -236,14 +236,18 @@ class Alert_Registro_Br {
         if ( 'domains-alerts' != $post_type ) return;
         
         $arb_domain_to_alert = get_post_meta( $post_id, 'arb_domain_to_alert', true );
+        $arb_domain_to_alert = preg_replace( '#^https?://#', '', rtrim( $arb_domain_to_alert, '/' ) );
         
         $infos = $this->arb_get_curl( 'https://rdap.registro.br/domain/' . $arb_domain_to_alert );
         $infos_json = json_decode( $infos );
         
-        if ( $infos ) {
-            $date = new DateTime( $infos_json->{'events'}[2]->eventDate, new DateTimeZone( 'America/Sao_Paulo' ));
-            $date_expiration = $date->format('d/m/Y');
-            update_post_meta( $post_id, 'arb_domain_expiration', $date_expiration );
+        /** 
+         * Save the expiration date on custom metabox
+         */
+        if ( $infos_json ) {
+            $date = new DateTime( $infos_json->{'events'}[2]->eventDate, new DateTimeZone( 'America/Sao_Paulo' ) );
+            $date_expiration = $date->format( 'd/m/Y' );
+            update_post_meta( $post_id, 'arb_domain_expiration', esc_attr( $date_expiration ) );
         }
     
     }
