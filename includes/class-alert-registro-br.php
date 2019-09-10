@@ -199,7 +199,7 @@ class Alert_Registro_Br {
             delete_post_meta( $post_id, $meta_key_mail, $meta_value_mail );
             
         // Expiration date
-        $new_meta_value_expiration = ( isset( $_POST['arb-domain-expiration'] ) ? sanitize_email( $_POST['arb-domain-expiration'] ) : '' );
+        $new_meta_value_expiration = ( isset( $_POST['arb-domain-expiration'] ) ? sanitize_text_field( $_POST['arb-domain-expiration'] ) : '' );
 
         $meta_key_expiration = 'arb_domain_expiration';
 
@@ -246,7 +246,7 @@ class Alert_Registro_Br {
          */
         if ( $infos_json ) {
             $date = new DateTime( $infos_json->{'events'}[2]->eventDate, new DateTimeZone( 'America/Sao_Paulo' ) );
-            $date_expiration = $date->format( 'd/m/Y' );
+            $date_expiration = $date->format( 'Y-m-d' );
             update_post_meta( $post_id, 'arb_domain_expiration', esc_attr( $date_expiration ) );
         }
     
@@ -304,8 +304,24 @@ class Alert_Registro_Br {
                 
             case 'arb-domain-expiration' :
                 $expiration = get_post_meta( $post_id , 'arb_domain_expiration', true );
-                if ( is_string( $expiration ) && ! empty( $expiration ) )
-                    echo $expiration;
+                $today = new DateTime();
+                                 
+                $date_expiration = str_replace ( '/', '-', $expiration );
+                $date_expiration = date( "Y-m-d", strtotime( $date_expiration ) );                
+                $date_expiration = new DateTime( $date_expiration );
+                $date_interval = $today->diff( $date_expiration );
+                $date_interval = $date_interval->days;
+                
+                if ( ! empty( $expiration ) )
+                    if ( $date_interval <= 15 ) {
+                        echo '<span class="default-alert low-alert">' . esc_html( $expiration ) . '</span>';
+                    } elseif( $date_interval <= 10 ) {
+                        echo '<span class="default-alert medium-alert">' . esc_html( $expiration ) . '</span>';
+                    } elseif( $date_interval <= 5 ) {
+                        echo '<span class="default-alert high-alert">' . esc_html( $expiration ) . '</span>';
+                    } else {
+                        echo '<span class="default-alert">' . esc_html( $expiration ) . '</span>';
+                    }
                 else
                     echo '--';
                 break;
@@ -330,3 +346,23 @@ class Alert_Registro_Br {
 }
 
 new Alert_Registro_Br();
+
+add_filter( 'manage_edit-domains-alerts_sortable_columns', 'my_sortable_cake_column' );
+function my_sortable_cake_column( $columns ) {
+    $columns['arb-domain-expiration'] = 'arb-domain-expiration';
+ 
+    return $columns;
+}
+
+add_action( 'pre_get_posts', 'my_slice_orderby' );
+function my_slice_orderby( $query ) {
+    if( ! is_admin() )
+        return;
+ 
+    $orderby = $query->get( 'orderby' );
+ 
+    if( 'arb-domain-expiration' == $orderby ) {
+        $query->set('meta_key','arb_domain_expiration');
+        //$query->set('orderby','meta_value_num');
+    }
+}
